@@ -59,7 +59,9 @@ Approach:
 2. Put the two conditions: are > 3Million and population > 25Million in the WHERE clause using OR operator
 */
 
-
+SELECT name, population, area
+FROM World
+WHERE area >= 3000000 OR population >= 25000000;
 
 /*
 What I learned / mistakes made:
