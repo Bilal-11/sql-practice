@@ -1,7 +1,10 @@
-/*
+# Department Top 3 Salaries
+I solved this same problem with cleaner use of window functions and wanted to compare my current approach with my previous solution.
+
+## Problem Statement
 Problem:
 Table: Employee
-
+```
 +--------------+---------+
 | Column Name  | Type    |
 +--------------+---------+
@@ -10,19 +13,21 @@ Table: Employee
 | salary       | int     |
 | departmentId | int     |
 +--------------+---------+
+```
 id is the primary key (column with unique values) for this table.
 departmentId is a foreign key (reference column) of the ID from the Department table.
 Each row of this table indicates the ID, name, and salary of an employee. It also contains the ID of their department.
  
 
 Table: Department
-
+```
 +-------------+---------+
 | Column Name | Type    |
 +-------------+---------+
 | id          | int     |
 | name        | varchar |
 +-------------+---------+
+```
 id is the primary key (column with unique values) for this table.
 Each row of this table indicates the ID of a department and its name.
  
@@ -41,6 +46,7 @@ Example 1:
 
 Input: 
 Employee table:
+```
 +----+-------+--------+--------------+
 | id | name  | salary | departmentId |
 +----+-------+--------+--------------+
@@ -52,14 +58,18 @@ Employee table:
 | 6  | Randy | 85000  | 1            |
 | 7  | Will  | 70000  | 1            |
 +----+-------+--------+--------------+
+```
 Department table:
+```
 +----+-------+
 | id | name  |
 +----+-------+
 | 1  | IT    |
 | 2  | Sales |
 +----+-------+
+```
 Output: 
+```
 +------------+----------+--------+
 | Department | Employee | Salary |
 +------------+----------+--------+
@@ -70,6 +80,7 @@ Output:
 | Sales      | Henry    | 80000  |
 | Sales      | Sam      | 60000  |
 +------------+----------+--------+
+```
 Explanation: 
 In the IT department:
 - Max earns the highest unique salary
@@ -80,19 +91,10 @@ In the Sales department:
 - Henry earns the highest salary
 - Sam earns the second-highest salary
 - There is no third-highest salary as there are only two employees
-*/
-/*
-Source: Leetcode 185 - https://leetcode.com/problems/department-top-three-salaries/description/?envType=study-plan-v2&envId=top-sql-50
-*/
-/* Difficulty: Hard */
-/* Topic:  */
-/*
-Approach:
-1. Join Employee and Department table on departmentId, SELECT Employee name, salary and Department name (Table1)
-2. Select all columns from Table1 and add a RANK column PARTITION BY department ORDER BY salary DESC, call this RANK deptrank (Table2)
-3. Select Employee, Salary, Department from Table2 WHERE deptrank = 1 OR 2 OR 3 (top 3 salaries)
-*/
 
+## Attempt 1
+_link to solution: https://github.com/Bilal-11/sql-practice/blob/main/week2/2026-05-10/q16_department_top_three_salaries.sql_
+```sql
 WITH S AS (WITH R AS (SELECT Employee.name AS emp, Employee.salary, Department.name AS dept
 FROM Employee
 JOIN Department ON Employee.departmentId = Department.id)
@@ -101,43 +103,20 @@ FROM R)
 SELECT dept AS Department, emp AS Employee, salary AS Salary
 FROM S
 WHERE deptrank = 1 OR deptrank = 2 OR deptrank = 3;
+```
 
---Wrong output:
-/*
-Output
-| Department | Employee | Salary |
-| ---------- | -------- | ------ |
-| IT         | Max      | 90000  |
-| IT         | Joe      | 85000  |
-| IT         | Randy    | 85000  |
-| Sales      | Henry    | 80000  |
-| Sales      | Sam      | 60000  |
+## Attempt 2
+_link to solution:_
+```sql
+WITH ranked AS (
+    SELECT d.name AS Department, e.name AS Employee, e.salary AS Salary, DENSE_RANK() OVER(PARTITION BY e.departmentId ORDER BY e.salary DESC) AS rk
+    FROM Employee e
+    JOIN Department d ON e.departmentId = d.id
+)
+SELECT Department, Employee, Salary
+FROM ranked
+WHERE rk <= 3;
+```
 
-Expected
-| Department | Employee | Salary |
-| ---------- | -------- | ------ |
-| IT         | Joe      | 85000  |
-| Sales      | Henry    | 80000  |
-| Sales      | Sam      | 60000  |
-| IT         | Max      | 90000  |
-| IT         | Randy    | 85000  |
-| IT         | Will     | 70000  |
-*/
-
---Corrected Solution:
-WITH S AS (WITH R AS (SELECT Employee.name AS emp, Employee.salary, Department.name AS dept
-FROM Employee
-JOIN Department ON Employee.departmentId = Department.id)
-SELECT emp, salary, dept, DENSE_RANK() OVER(PARTITION BY dept ORDER BY salary DESC) AS deptrank
-FROM R)
-SELECT dept AS Department, emp AS Employee, salary AS Salary
-FROM S
-WHERE deptrank = 1 OR deptrank = 2 OR deptrank = 3;
-
-/*
-What I learned / mistakes made:
-1. I thought using RANK would suffice, as it gives the same rank to the same values. So two employees with the same second-highest salaries would be accounted for.
-What I didn't take into account is that after assigning rank 2 to two records, RANK will assign 4 as the rank to the thired-highest salary.
-The correct function to use was DENSE_RANK, as it not only assigns same rank to same values, but also keeps the rank consecutive, so third highest salary wud still get rank 3 even if 2 people got the same second highest salary.
-2. the condition in where clause can be WHERE deptrank <= 3 instead of WHERE deptrank = 1 OR deptrank = 2 OR deptrank = 3.
-*/
+## Comparision
+Both solutions do the same things and use the same methods. However Attempt1 uses 2 CTEs compared to 1 CTE used by Attempt2. The JOIN and DENSE_RANK is done in 2 steps in Attempt 1 when it can be done in one step. This again illustrates the power of pattern recognition in problems (Top N in group problem identified) and the application of typical solution (window function in a CTE wrapper-filter format).

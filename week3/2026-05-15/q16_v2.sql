@@ -85,59 +85,24 @@ In the Sales department:
 Source: Leetcode 185 - https://leetcode.com/problems/department-top-three-salaries/description/?envType=study-plan-v2&envId=top-sql-50
 */
 /* Difficulty: Hard */
-/* Topic:  */
+/* Topic: DENSE_RANK + PARTITION */
 /*
 Approach:
-1. Join Employee and Department table on departmentId, SELECT Employee name, salary and Department name (Table1)
-2. Select all columns from Table1 and add a RANK column PARTITION BY department ORDER BY salary DESC, call this RANK deptrank (Table2)
-3. Select Employee, Salary, Department from Table2 WHERE deptrank = 1 OR 2 OR 3 (top 3 salaries)
+1. create CTE in which Employee is JOINed to Department and DENSE_RANK is added as a column PARTITIONed by departmentId and ORDERed BY salary in DESCending order.
+2. DENSE_RANK is used because if two people get the same, lets say highest salary, the next highest salary (unique second highest) wud be ranked 3 by RANK and the unique third highest salary wud be missed. This problem does not occur with DENSE_RANK as it continues the rank counting.
+3. Outside of CTE, Deparment, Employee and Salary are SELECTed where the dense rank <= 3.
 */
 
-WITH S AS (WITH R AS (SELECT Employee.name AS emp, Employee.salary, Department.name AS dept
-FROM Employee
-JOIN Department ON Employee.departmentId = Department.id)
-SELECT emp, salary, dept, RANK() OVER(PARTITION BY dept ORDER BY salary DESC) AS deptrank
-FROM R)
-SELECT dept AS Department, emp AS Employee, salary AS Salary
-FROM S
-WHERE deptrank = 1 OR deptrank = 2 OR deptrank = 3;
-
---Wrong output:
-/*
-Output
-| Department | Employee | Salary |
-| ---------- | -------- | ------ |
-| IT         | Max      | 90000  |
-| IT         | Joe      | 85000  |
-| IT         | Randy    | 85000  |
-| Sales      | Henry    | 80000  |
-| Sales      | Sam      | 60000  |
-
-Expected
-| Department | Employee | Salary |
-| ---------- | -------- | ------ |
-| IT         | Joe      | 85000  |
-| Sales      | Henry    | 80000  |
-| Sales      | Sam      | 60000  |
-| IT         | Max      | 90000  |
-| IT         | Randy    | 85000  |
-| IT         | Will     | 70000  |
-*/
-
---Corrected Solution:
-WITH S AS (WITH R AS (SELECT Employee.name AS emp, Employee.salary, Department.name AS dept
-FROM Employee
-JOIN Department ON Employee.departmentId = Department.id)
-SELECT emp, salary, dept, DENSE_RANK() OVER(PARTITION BY dept ORDER BY salary DESC) AS deptrank
-FROM R)
-SELECT dept AS Department, emp AS Employee, salary AS Salary
-FROM S
-WHERE deptrank = 1 OR deptrank = 2 OR deptrank = 3;
+WITH ranked AS (
+    SELECT d.name AS Department, e.name AS Employee, e.salary AS Salary, DENSE_RANK() OVER(PARTITION BY e.departmentId ORDER BY e.salary DESC) AS rk
+    FROM Employee e
+    JOIN Department d ON e.departmentId = d.id
+)
+SELECT Department, Employee, Salary
+FROM ranked
+WHERE rk <= 3;
 
 /*
 What I learned / mistakes made:
-1. I thought using RANK would suffice, as it gives the same rank to the same values. So two employees with the same second-highest salaries would be accounted for.
-What I didn't take into account is that after assigning rank 2 to two records, RANK will assign 4 as the rank to the thired-highest salary.
-The correct function to use was DENSE_RANK, as it not only assigns same rank to same values, but also keeps the rank consecutive, so third highest salary wud still get rank 3 even if 2 people got the same second highest salary.
-2. the condition in where clause can be WHERE deptrank <= 3 instead of WHERE deptrank = 1 OR deptrank = 2 OR deptrank = 3.
+1. For Top N unique values in group problems, DENSE_RANK is used instead of RANK as it maintains the continuity of rank value.
 */
