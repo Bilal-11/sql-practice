@@ -106,7 +106,7 @@ WHERE deptrank = 1 OR deptrank = 2 OR deptrank = 3;
 ```
 
 ## Attempt 2
-_link to solution:_
+_link to solution: https://github.com/Bilal-11/sql-practice/blob/main/week3/2026-05-15/q16_v2.sql_
 ```sql
 WITH ranked AS (
     SELECT d.name AS Department, e.name AS Employee, e.salary AS Salary, DENSE_RANK() OVER(PARTITION BY e.departmentId ORDER BY e.salary DESC) AS rk
