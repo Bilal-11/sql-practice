@@ -3,7 +3,7 @@ I was unable to solve this problem. So, I want to take a closer look at solution
 
 ## Problem Statement
 Table: Customer
-
+```
 +---------------+---------+
 | Column Name   | Type    |
 +---------------+---------+
@@ -12,6 +12,7 @@ Table: Customer
 | visited_on    | date    |
 | amount        | int     |
 +---------------+---------+
+```
 In SQL,(customer_id, visited_on) is the primary key for this table.
 This table contains data about customer transactions in a restaurant.
 visited_on is the date on which the customer with ID (customer_id) has visited the restaurant.
