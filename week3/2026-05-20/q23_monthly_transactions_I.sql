@@ -72,6 +72,6 @@ GROUP BY DATE_FORMAT(trans_date,'%Y-%m'), country;
 /*
 What I learned / mistakes made:
 1. DATE_FORMAT(<date>,<format-specifier>) can be used to get dates in different formats.
-2. COUNT(stat='approved) doesn't work. COUNT(CASE WHEN state = 'approved' THEN 1 ELSE NULL END) does.
+2. COUNT(state='approved) doesn't work. COUNT(CASE WHEN state = 'approved' THEN 1 ELSE NULL END) does.
 3. When counting values, non-null columns are more reliable. To get transaction_count, I initially used COUNT(country) which works but failed a test case where country was null. Thus, COUNT(id) is better in this case.
 */
